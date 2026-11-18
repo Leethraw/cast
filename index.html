@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sala de Aula da Tia Gigi</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#1d1433;--pan:#2e1f55;--ink:#fff5d6;--acc:#ffd23f;--pink:#ff6fae}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Press Start 2P",ui-monospace,monospace;font-size:10px;line-height:1.7;min-height:100vh;display:flex;justify-content:center;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
+.screen{display:none;width:100%;max-width:640px;padding:18px 14px;flex-direction:column;align-items:center;gap:14px}
+.screen.on{display:flex}
+h1{font-size:15px;line-height:1.6;text-align:center;color:var(--acc);margin:6px 0;text-shadow:3px 3px 0 #7a2b6b}
+.panel{background:var(--pan);border:4px solid var(--ink);box-shadow:6px 6px 0 #0d0820;padding:14px;width:100%;display:flex;flex-direction:column;gap:12px}
+.btn{font:inherit;color:#1d1433;background:var(--acc);border:0;padding:12px 14px;cursor:pointer;box-shadow:inset -4px -4px 0 #c9971b,inset 4px 4px 0 #fff0a3,4px 4px 0 #0d0820}
+.btn.pk{background:var(--pink);box-shadow:inset -4px -4px 0 #c23d7c,inset 4px 4px 0 #ffb3d4,4px 4px 0 #0d0820}
+.btn.sm{padding:8px 10px;font-size:9px}
+.btn:active{transform:translate(2px,2px)}
+.btn:disabled{opacity:.6;cursor:wait}
+.btn:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid #fff;outline-offset:2px}
+input,textarea{font:inherit;font-size:10px;background:#120a26;color:var(--ink);border:3px solid var(--ink);padding:10px;width:100%;resize:none}
+label{display:block;margin-bottom:6px;color:var(--acc)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.grow{flex:1}
+canvas{image-rendering:pixelated;image-rendering:crisp-edges;background:#000}
+#cv{width:100%;max-width:640px;height:auto;border:4px solid var(--ink);box-shadow:6px 6px 0 #0d0820}
+#pv{width:200px;height:170px;border:3px solid var(--ink);align-self:center}
+.opt{display:flex;align-items:center;gap:6px}
+.opt .lb{width:112px;color:var(--acc);font-size:8px}
+.opt .vl{flex:1;text-align:center;font-size:8px}
+.opt .btn{padding:6px 10px}
+#dlg{width:100%;min-height:92px;background:var(--pan);border:4px solid var(--ink);padding:12px;box-shadow:6px 6px 0 #0d0820}
+#dlg b{color:var(--pink);display:block;margin-bottom:6px}
+.hint,.small{color:#b9a8e6}
+.small{font-size:8px}
+.err{color:#ff8a8a}
+.pad{display:grid;grid-template-columns:repeat(3,52px);grid-template-rows:repeat(2,52px);gap:6px;touch-action:none;user-select:none;-webkit-user-select:none}
+.pad .btn{padding:0;font-size:16px;touch-action:none}
+@media (hover:hover) and (pointer:fine){.pad{display:none}}
+</style>
+</head>
+<body>
+
+<section id="menu" class="screen on">
+  <h1>SALA DE AULA<br>DA TIA GIGI</h1>
+  <div class="panel">
+    <p>Feliz aniversário, Tia Gigi! Deixe sua mensagem na sala de aula.</p>
+    <button class="btn" id="goGuest">Sou convidado</button>
+    <div>
+      <label for="em">Sou a Tia Gigi</label>
+      <div id="loginBox" class="panel" style="padding:0;border:0;box-shadow:none;background:none">
+        <input id="em" type="email" placeholder="e-mail" autocomplete="username">
+        <input id="pw" type="password" placeholder="senha" autocomplete="current-password">
+      </div>
+      <p class="small" id="testNote" hidden>Modo de teste: Firebase ainda não configurado. Clique em Entrar.</p>
+      <button class="btn pk" id="goTeacher" style="margin-top:10px">Entrar</button>
+      <p class="small err" id="loginErr" hidden></p>
+    </div>
+  </div>
+  <button class="btn sm" id="wipe" hidden>Limpar mensagens de teste</button>
+</section>
+
+<section id="creator" class="screen">
+  <h1>CRIE SEU ALUNO</h1>
+  <div class="panel">
+    <canvas id="pv" width="40" height="34"></canvas>
+    <div id="opts" style="display:flex;flex-direction:column;gap:8px"></div>
+    <button class="btn sm" id="rnd">Aleatório</button>
+    <div><label for="nm">Seu nome</label><input id="nm" maxlength="24" autocomplete="off"></div>
+    <div><label for="ms">Sua mensagem</label><textarea id="ms" rows="4" maxlength="200" placeholder="Parabéns, Tia Gigi!"></textarea></div>
+    <p class="small err" id="crErr" hidden></p>
+    <button class="btn pk" id="send">Sentar na carteira</button>
+    <button class="btn sm" id="back1">Voltar</button>
+  </div>
+</section>
+
+<section id="thanks" class="screen">
+  <h1>MENSAGEM<br>ENVIADA!</h1>
+  <div class="panel"><p>Seu aluno já está sentado na sala. A Tia Gigi vai encontrar sua mensagem no dia do aniversário.</p>
+  <button class="btn" id="again">Deixar outra mensagem</button></div>
+</section>
+
+<section id="game" class="screen">
+  <canvas id="cv" width="320" height="200"></canvas>
+  <div class="row" style="width:100%;justify-content:space-between"><span id="hud" class="small"></span><button class="btn sm" id="exit">Sair</button></div>
+  <div id="dlg"><span class="hint">Ande pela sala e chegue perto de um aluno.</span></div>
+  <div class="pad">
+    <span></span><button class="btn" data-d="up" aria-label="Cima">▲</button><span></span>
+    <button class="btn" data-d="left" aria-label="Esquerda">◀</button><button class="btn" data-d="down" aria-label="Baixo">▼</button><button class="btn" data-d="right" aria-label="Direita">▶</button>
+  </div>
+  <p class="small">Setas ou WASD para andar</p>
+</section>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+// ===== CONFIGURAÇÃO: cole aqui os dados do seu projeto Firebase =====
+const FIREBASE_CONFIG = {
+  apiKey: "COLE_AQUI",
+  authDomain: "COLE_AQUI",
+  projectId: "COLE_AQUI",
+  appId: "COLE_AQUI"
+};
+
+const LIVE = typeof firebase !== "undefined" && FIREBASE_CONFIG.apiKey && !FIREBASE_CONFIG.apiKey.startsWith("COLE");
+let db = null, auth = null;
+if (LIVE) { firebase.initializeApp(FIREBASE_CONFIG); db = firebase.firestore(); auth = firebase.auth(); }
+
+// ===== ARMAZENAMENTO =====
+const LK = "sala_msgs_v2";
+const localList = () => { try { return JSON.parse(localStorage.getItem(LK)) || null } catch (e) { return null } };
+const store = {
+  async add(m) {
+    if (LIVE) { await db.collection("mensagens").add(m); return; }
+    const l = localList() || []; l.push({ ...m, id: "m" + Date.now() });
+    localStorage.setItem(LK, JSON.stringify(l));
+  },
+  async all() {
+    if (LIVE) { const s = await db.collection("mensagens").orderBy("ts").get(); return s.docs.map(d => ({ id: d.id, ...d.data() })); }
+    let l = localList();
+    if (!l) {
+      l = [
+        { id: "d1", name: "Ana (exemplo)", text: "Parabéns, Tia Gigi! Você é a melhor!", av: { skin: 1, hs: 1, hc: 5, shirt: 3, ss: 2, acc: 5 } },
+        { id: "d2", name: "Beto (exemplo)", text: "Muita saúde e muitos bolos hoje!", av: { skin: 4, hs: 5, hc: 0, shirt: 2, ss: 1, acc: 2, face: 2 } },
+        { id: "d3", name: "Cris (exemplo)", text: "Obrigada por tudo. Feliz aniversário!", av: { skin: 2, hs: 4, hc: 3, shirt: 6, ss: 3, acc: 3, face: 1 } }
+      ];
+      localStorage.setItem(LK, JSON.stringify(l));
+    }
+    return l;
+  }
+};
+
+// ===== DESENHO PIXEL =====
+const PAL = {
+  skin: ["#fde0c8", "#f8d2b0", "#e0a878", "#c68642", "#8d5524", "#5c3a21"],
+  hc: ["#2b1b12", "#6b3f1d", "#a0522d", "#d9a441", "#c0392b", "#e84fa0", "#3b6fd4", "#ecf0f1"],
+  shirt: ["#e74c3c", "#3498db", "#2ecc71", "#f1c40f", "#9b59b6", "#ecf0f1", "#e67e22", "#2c3e7a"],
+  eyes: ["#1a1a1a", "#6b3f1d", "#2e86de", "#27ae60"]
+};
+const px = (c, x, y, w, h, col) => { c.fillStyle = col; c.fillRect(Math.round(x), Math.round(y), w, h) };
+
+function person(c, x, y, a, o = {}) {
+  const g = k => a[k] | 0;
+  const sk = PAL.skin[g("skin")], hr = PAL.hc[g("hc")], sh = o.teacher ? "#8e44ad" : PAL.shirt[g("shirt")];
+  if (!o.seated) {
+    const s = o.step ? 1 : 0;
+    px(c, x - 4, y - 6 - s, 3, 6, "#34495e"); px(c, x + 1, y - 6 - (1 - s), 3, 6, "#34495e");
+    px(c, x - 4, y - 1 - s, 3, 1, "#1a1a1a"); px(c, x + 1, y - 1 - (1 - s), 3, 1, "#1a1a1a");
+  }
+  px(c, x - 7, y - 15, 2, 7, sk); px(c, x + 5, y - 15, 2, 7, sk);
+  px(c, x - 5, y - 16, 10, 10, sh);
+  const ss = o.teacher ? 0 : g("ss");
+  if (ss == 1) { px(c, x - 5, y - 13, 10, 1, "rgba(255,255,255,.6)"); px(c, x - 5, y - 10, 10, 1, "rgba(255,255,255,.6)"); }
+  if (ss == 2) { const h = "#ff6fae"; px(c, x - 3, y - 13, 2, 2, h); px(c, x + 1, y - 13, 2, 2, h); px(c, x - 3, y - 12, 6, 2, h); px(c, x - 2, y - 10, 4, 1, h); px(c, x - 1, y - 9, 2, 1, h); }
+  if (ss == 3) { const o2 = "#2c5aa0"; px(c, x - 3, y - 16, 2, 6, o2); px(c, x + 1, y - 16, 2, 6, o2); px(c, x - 3, y - 11, 6, 5, o2); }
+  if (o.teacher) { px(c, x - 2, y - 16, 4, 2, "#ffd23f"); px(c, x - 1, y - 12, 2, 2, "#ffd23f"); }
+  px(c, x - 4, y - 24, 8, 8, sk);
+  if (g("face") == 3) px(c, x - 4, y - 19, 8, 3, hr);
+  const ey = PAL.eyes[g("eyes")];
+  px(c, x - 2, y - 21, 1, 2, ey); px(c, x + 1, y - 21, 1, 2, ey);
+  px(c, x - 1, y - 18, 2, 1, "#b5503c");
+  if (g("face") == 1) { [[-3, -19], [2, -19], [-1, -19]].forEach(([dx, dy]) => px(c, x + dx, y + dy, 1, 1, "#b5703a")); }
+  if (g("face") == 2) px(c, x - 2, y - 19, 4, 1, hr);
+  if (g("face") == 4) { px(c, x - 3, y - 19, 1, 1, "#ff8aa8"); px(c, x + 2, y - 19, 1, 1, "#ff8aa8"); }
+  const hs = g("hs");
+  if (hs == 0) { px(c, x - 4, y - 25, 8, 3, hr); px(c, x - 5, y - 24, 1, 3, hr); px(c, x + 4, y - 24, 1, 3, hr); }
+  else if (hs == 1) { px(c, x - 5, y - 25, 10, 3, hr); px(c, x - 5, y - 22, 2, 9, hr); px(c, x + 3, y - 22, 2, 9, hr); }
+  else if (hs == 2) { px(c, x - 4, y - 25, 8, 3, hr); px(c, x - 2, y - 29, 4, 4, hr); }
+  else if (hs == 3) { px(c, x - 6, y - 28, 12, 6, hr); px(c, x - 6, y - 22, 2, 4, hr); px(c, x + 4, y - 22, 2, 4, hr); }
+  else if (hs == 4) { px(c, x - 4, y - 25, 8, 3, hr); px(c, x - 7, y - 23, 3, 5, hr); px(c, x + 4, y - 23, 3, 5, hr); }
+  else if (hs == 5) { px(c, x - 1, y - 30, 3, 6, hr); px(c, x - 4, y - 24, 8, 1, hr); }
+  const ac = o.teacher ? 1 : g("acc");
+  if (ac == 1) { const k = "#222"; px(c, x - 4, y - 22, 4, 1, k); px(c, x - 4, y - 20, 4, 1, k); px(c, x - 4, y - 21, 1, 1, k); px(c, x - 1, y - 21, 1, 1, k); px(c, x, y - 22, 4, 1, k); px(c, x, y - 20, 4, 1, k); px(c, x, y - 21, 1, 1, k); px(c, x + 3, y - 21, 1, 1, k); }
+  if (ac == 2) px(c, x - 4, y - 22, 8, 2, "#111");
+  if (ac == 3) { const d = "#ffd23f"; px(c, x - 3, y - 27, 6, 2, d); px(c, x - 3, y - 29, 1, 2, d); px(c, x - 1, y - 29, 2, 2, d); px(c, x + 2, y - 29, 1, 2, d); }
+  if (ac == 4) { px(c, x - 5, y - 27, 10, 3, "#e74c3c"); px(c, x + 1, y - 25, 6, 1, "#c0392b"); }
+  if (ac == 5) { const b = "#ff6fae"; px(c, x + 1, y - 27, 2, 3, b); px(c, x + 4, y - 27, 2, 3, b); px(c, x + 3, y - 26, 1, 1, "#c23d7c"); }
+  if (o.teacher) { px(c, x - 1, y - 33, 2, 2, "#ffd23f"); px(c, x - 2, y - 31, 4, 3, "#ff6fae"); px(c, x - 3, y - 28, 6, 3, "#ff6fae"); px(c, x - 3, y - 26, 6, 1, "#ffd23f"); }
+}
+const TIA = { skin: 2, hs: 2, hc: 1, shirt: 4, ss: 0, acc: 1, face: 0, eyes: 1 };
+
+// ===== CENÁRIO =====
+const cv = document.getElementById("cv"), cx = cv.getContext("2d");
+function room(c, H) {
+  px(c, 0, 0, 320, H, "#e8d9b0");
+  for (let y = 56; y < H; y += 8) for (let x = 0; x < 320; x += 8) px(c, x, y, 8, 8, ((x + y) / 8) % 2 ? "#c99a62" : "#d3a870");
+  px(c, 0, 0, 320, 56, "#f0e6c8"); px(c, 0, 44, 320, 12, "#8a5a2b"); px(c, 0, 44, 320, 2, "#b07a43");
+  [12, 272].forEach(wx => { px(c, wx, 8, 36, 28, "#6b4a2b"); px(c, wx + 3, 11, 30, 22, "#8fd3ff"); px(c, wx + 17, 11, 2, 22, "#6b4a2b"); px(c, wx + 3, 21, 30, 2, "#6b4a2b"); px(c, wx + 6, 14, 8, 3, "#fff"); });
+  px(c, 70, 6, 180, 38, "#6b4a2b"); px(c, 74, 10, 172, 30, "#2f6b4f"); px(c, 74, 38, 172, 2, "#b9b9b9");
+  c.fillStyle = "#fff5d6"; c.textAlign = "center"; c.font = '8px "Press Start 2P", monospace';
+  c.fillText("FELIZ ANIVERSÁRIO", 160, 22); c.fillStyle = "#ffd23f"; c.fillText("TIA GIGI!", 160, 34);
+  [[58, "#ff6fae"], [64, "#ffd23f"], [256, "#3498db"], [262, "#ff6fae"]].forEach(([bx, col], i) => {
+    const by = 8 + (i % 2) * 4; px(c, bx, by, 6, 8, col); px(c, bx + 1, by - 1, 4, 1, col); px(c, bx + 1, by + 1, 1, 2, "#fff"); px(c, bx + 3, by + 8, 1, 18, "#fff");
+  });
+  px(c, 6, 48, 46, 12, "#8a5a2b"); px(c, 6, 48, 46, 3, "#b07a43");
+  px(c, 20, 40, 18, 8, "#fff5d6"); px(c, 20, 42, 18, 2, "#ff6fae"); px(c, 28, 34, 2, 6, "#ffd23f"); px(c, 28, 32, 2, 2, "#ff7b2b");
+}
+function desk(c, x, y) { px(c, x - 13, y - 10, 26, 4, "#c98a4b"); px(c, x - 13, y - 6, 26, 6, "#8a5a2b"); px(c, x - 12, y - 10, 24, 1, "#e0a868"); }
+
+// ===== CRIADOR DE AVATAR =====
+const OPT = [
+  ["skin", "Pele", 6], ["hs", "Cabelo", 7, ["Curto", "Longo", "Coque", "Volumoso", "Chiquinhas", "Moicano", "Careca"]],
+  ["hc", "Cor do cabelo", 8], ["eyes", "Olhos", 4], ["face", "Rosto", 5, ["Normal", "Sardas", "Bigode", "Barba", "Blush"]],
+  ["acc", "Acessório", 6, ["Nenhum", "Óculos", "Óculos de sol", "Coroa", "Boné", "Laço"]],
+  ["shirt", "Cor da camisa", 8], ["ss", "Estilo", 4, ["Lisa", "Listrada", "Coração", "Macacão"]]
+];
+const av = { skin: 0, hs: 0, hc: 0, eyes: 0, face: 0, acc: 0, shirt: 0, ss: 0 };
+const pv = document.getElementById("pv"), pc = pv.getContext("2d");
+function drawPv() { px(pc, 0, 0, 40, 34, "#c99a62"); px(pc, 0, 22, 40, 12, "#d3a870"); person(pc, 20, 32, av, {}); }
+function buildOpts() {
+  const box = $("opts"); box.innerHTML = "";
+  OPT.forEach(([k, lab, n, names]) => {
+    const r = document.createElement("div"); r.className = "opt";
+    const l = document.createElement("span"); l.className = "lb"; l.textContent = lab;
+    const v = document.createElement("span"); v.className = "vl";
+    const upd = () => { v.textContent = names ? names[av[k]] : (av[k] + 1) + "/" + n; drawPv(); };
+    const mk = (t, d) => { const b = document.createElement("button"); b.className = "btn"; b.textContent = t; b.setAttribute("aria-label", lab + (d < 0 ? " anterior" : " próximo")); b.onclick = () => { av[k] = (av[k] + d + n) % n; upd(); }; return b; };
+    r.append(l, mk("◀", -1), v, mk("▶", 1)); box.append(r); r._upd = upd; upd();
+  });
+}
+function refreshOpts() { document.querySelectorAll("#opts .opt").forEach(r => r._upd()); }
+function randomize() { OPT.forEach(([k, , n]) => av[k] = Math.floor(Math.random() * n)); refreshOpts(); }
+
+// ===== TELAS =====
+function $(id) { return document.getElementById(id) }
+let running = false;
+function show(id) { document.querySelectorAll(".screen").forEach(s => s.classList.toggle("on", s.id === id)); running = (id === "game"); }
+function resetCreator() { $("nm").value = ""; $("ms").value = ""; $("crErr").hidden = true; randomize(); }
+$("goGuest").onclick = () => { resetCreator(); show("creator"); };
+$("back1").onclick = () => show("menu");
+$("again").onclick = () => { resetCreator(); show("creator"); };
+$("exit").onclick = () => show("menu");
+$("rnd").onclick = randomize;
+$("wipe").onclick = () => { try { localStorage.removeItem(LK) } catch (e) { } };
+$("send").onclick = async () => {
+  const name = $("nm").value.trim(), text = $("ms").value.trim(), e = $("crErr");
+  if (!name || !text) { e.textContent = "Escreva seu nome e uma mensagem."; e.hidden = false; return; }
+  const b = $("send"); b.disabled = true; e.hidden = true;
+  try { await store.add({ name, text, av: { ...av }, ts: Date.now() }); show("thanks"); }
+  catch (err) { e.textContent = "Não foi possível enviar. Verifique a internet e tente de novo."; e.hidden = false; }
+  b.disabled = false;
+};
+$("goTeacher").onclick = async () => {
+  const e = $("loginErr"), b = $("goTeacher"); e.hidden = true; b.disabled = true;
+  try {
+    if (LIVE) await auth.signInWithEmailAndPassword($("em").value.trim(), $("pw").value);
+    $("pw").value = ""; await startGame();
+  } catch (err) {
+    e.textContent = (err && err.code && err.code.startsWith("auth/")) ? "E-mail ou senha incorretos." : "Não foi possível carregar as mensagens.";
+    e.hidden = false;
+  }
+  b.disabled = false;
+};
+if (!LIVE) { $("loginBox").hidden = true; $("testNote").hidden = false; $("wipe").hidden = false; }
+
+// ===== JOGO =====
+let kids = [], read = new Set(), T = { x: 160, y: 70, step: 0, t: 0 }, keys = {}, H = 200;
+const cols = [52, 107, 162, 217, 272];
+async function startGame() {
+  const list = await store.all();
+  const nRows = Math.max(3, Math.ceil(list.length / 5));
+  H = 58 + nRows * 40 + 8; cv.height = H;
+  kids = list.map((m, i) => ({ ...m, x: cols[i % 5], y: 98 + 40 * Math.floor(i / 5) }));
+  read = new Set(); T = { x: 160, y: 70, step: 0, t: 0 }; keys = {};
+  $("dlg").dataset.id = ""; $("dlg").innerHTML = '<span class="hint">Ande pela sala e chegue perto de um aluno.</span>';
+  show("game"); loop();
+}
+const KM = { ArrowUp: "up", w: "up", ArrowDown: "down", s: "down", ArrowLeft: "left", a: "left", ArrowRight: "right", d: "right" };
+addEventListener("keydown", e => { const m = KM[e.key]; if (m && running) { keys[m] = true; e.preventDefault(); } });
+addEventListener("keyup", e => { const m = KM[e.key]; if (m) keys[m] = false; });
+document.querySelectorAll("[data-d]").forEach(b => {
+  const d = b.dataset.d;
+  b.addEventListener("pointerdown", e => { e.preventDefault(); keys[d] = true; });
+  ["pointerup", "pointerleave", "pointercancel"].forEach(ev => b.addEventListener(ev, () => keys[d] = false));
+});
+function loop() {
+  if (!running) return;
+  const dx = (keys.right ? 1 : 0) - (keys.left ? 1 : 0), dy = (keys.down ? 1 : 0) - (keys.up ? 1 : 0);
+  if (dx || dy) { T.x = Math.min(308, Math.max(12, T.x + dx * 1.4)); T.y = Math.min(H - 4, Math.max(66, T.y + dy * 1.4)); T.t++; T.step = (T.t >> 3) & 1; }
+  room(cx, H);
+  let near = null, best = 28;
+  kids.forEach(k => { const d = Math.hypot(T.x - k.x, T.y - (k.y + 10)); if (d < best) { best = d; near = k; } });
+  const ents = kids.map(k => ({ y: k.y, k })).concat([{ y: T.y, t: 1 }]).sort((a, b) => a.y - b.y);
+  const now = performance.now() / 220;
+  ents.forEach(e => {
+    if (e.t) { person(cx, T.x, T.y, TIA, { teacher: true, step: T.step }); return; }
+    const k = e.k; person(cx, k.x, k.y, k.av || {}, { seated: true }); desk(cx, k.x, k.y);
+    if (!read.has(k.id)) { const yy = k.y - 40 + Math.sin(now + k.x) * 2; px(cx, k.x - 4, yy, 8, 6, "#fff5d6"); px(cx, k.x - 4, yy, 8, 1, "#c99a62"); px(cx, k.x - 1, yy + 2, 2, 2, "#ff6fae"); }
+    if (k === near) px(cx, k.x - 14, k.y - 11, 28, 1, "#ffd23f");
+  });
+  const d = $("dlg");
+  if (near) {
+    read.add(near.id);
+    if (d.dataset.id !== near.id) { d.dataset.id = near.id; d.innerHTML = ""; const b = document.createElement("b"); b.textContent = near.name; const p = document.createElement("span"); p.textContent = near.text; d.append(b, p); }
+  } else if (d.dataset.id) { d.dataset.id = ""; d.innerHTML = '<span class="hint">Chegue perto de um aluno para ler a mensagem.</span>'; }
+  $("hud").textContent = "Lidas: " + read.size + "/" + kids.length;
+  requestAnimationFrame(loop);
+}
+buildOpts();
+</script>
+</body>
+</html>
